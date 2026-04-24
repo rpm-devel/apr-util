@@ -1,34 +1,24 @@
 
-%if 0%{?fedora} < 18 && 0%{?rhel} < 7
-%define dbdep db4-devel
-%else
 %define dbdep libdb-devel
-%endif
-
-%if 0%{?fedora} < 27 && 0%{?rhel} <= 7
-%global with_nss 1
-%else
 %global with_nss 0
-%endif
 
 %define apuver 1
 
 Summary: Apache Portable Runtime Utility library
 Name: apr-util
-Version: 1.6.0
+Version: 1.6.3
 Release: 1%{?dist}
 License: ASL 2.0
-Group: System Environment/Libraries
 URL: http://apr.apache.org/
-Source0: http://www.apache.org/dist/apr/%{name}-%{version}.tar.bz2
+Source0: https://downloads.apache.org/apr/%{name}-%{version}.tar.bz2
 Patch1: apr-util-1.2.7-pkgconf.patch
 Patch4: apr-util-1.4.1-private.patch
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
+BuildRequires: gcc
+BuildRequires: make
 BuildRequires: autoconf, apr-devel >= 1.3.0
 BuildRequires: %{dbdep}, expat-devel, libuuid-devel
-%if 0%{?fedora} < 27
 Requires: apr-util-bdb%{?_isa} = %{version}-%{release}
-%endif
+Obsoletes: apr-util < %{version}-%{release}
 
 %description
 The mission of the Apache Portable Runtime (APR) is to provide a
@@ -37,95 +27,84 @@ contains additional utility interfaces for APR; including support
 for XML, LDAP, database interfaces, URI parsing and more.
 
 %package devel
-Group: Development/Libraries
 Summary: APR utility library development kit
 Requires: apr-util%{?_isa} = %{version}-%{release}, apr-devel%{?_isa}, pkgconfig
 Requires: %{dbdep}%{?_isa}, expat-devel%{?_isa}, openldap-devel%{?_isa}
+Obsoletes: apr-util-devel < %{version}-%{release}
 
 %description devel
-This package provides the support files which can be used to 
-build applications using the APR utility library.  The mission 
-of the Apache Portable Runtime (APR) is to provide a free 
+This package provides the support files which can be used to
+build applications using the APR utility library.  The mission
+of the Apache Portable Runtime (APR) is to provide a free
 library of C data structures and routines.
 
 %package pgsql
-Group: Development/Libraries
 Summary: APR utility library PostgreSQL DBD driver
 BuildRequires: postgresql-devel
 Requires: apr-util%{?_isa} = %{version}-%{release}
+Obsoletes: apr-util-pgsql < %{version}-%{release}
 
 %description pgsql
 This package provides the PostgreSQL driver for the apr-util
 DBD (database abstraction) interface.
 
 %package bdb
-Group: Development/Libraries
 Summary: APR utility library Berkeley DB driver
 BuildRequires: postgresql-devel
 Requires: apr-util%{?_isa} = %{version}-%{release}
+Obsoletes: apr-util-bdb < %{version}-%{release}
 
 %description bdb
 This package provides the Berkeley DB driver for the apr-util
 DBM (database abstraction) interface.
 
 %package mysql
-Group: Development/Libraries
 Summary: APR utility library MySQL DBD driver
 BuildRequires: mysql-devel
 Requires: apr-util%{?_isa} = %{version}-%{release}
+Obsoletes: apr-util-mysql < %{version}-%{release}
 
 %description mysql
 This package provides the MySQL driver for the apr-util DBD
 (database abstraction) interface.
 
 %package sqlite
-Group: Development/Libraries
 Summary: APR utility library SQLite DBD driver
 BuildRequires: sqlite-devel >= 3.0.0
 Requires: apr-util%{?_isa} = %{version}-%{release}
+Obsoletes: apr-util-sqlite < %{version}-%{release}
 
 %description sqlite
 This package provides the SQLite driver for the apr-util DBD
 (database abstraction) interface.
 
 %package odbc
-Group: Development/Libraries
 Summary: APR utility library ODBC DBD driver
 BuildRequires: unixODBC-devel
 Requires: apr-util%{?_isa} = %{version}-%{release}
+Obsoletes: apr-util-odbc < %{version}-%{release}
 
 %description odbc
 This package provides the ODBC driver for the apr-util DBD
 (database abstraction) interface.
 
 %package ldap
-Group: Development/Libraries
 Summary: APR utility library LDAP support
 BuildRequires: openldap-devel
 Requires: apr-util%{?_isa} = %{version}-%{release}
+Obsoletes: apr-util-ldap < %{version}-%{release}
 
 %description ldap
 This package provides the LDAP support for the apr-util.
 
 %package openssl
-Group: Development/Libraries
 Summary: APR utility library OpenSSL crypto support
 BuildRequires: openssl-devel
 Requires: apr-util%{?_isa} = %{version}-%{release}
+Obsoletes: apr-util-openssl < %{version}-%{release}
 
 %description openssl
 This package provides the OpenSSL crypto support for the apr-util.
-
-%if %{with_nss}
-%package nss
-Group: Development/Libraries
-Summary: APR utility library NSS crypto support
-BuildRequires: nss-devel
-Requires: apr-util%{?_isa} = %{version}-%{release}
-
-%description nss
-This package provides the NSS crypto support for the apr-util.
-%endif
 
 %prep
 %setup -q
@@ -144,11 +123,7 @@ export ac_cv_ldap_set_rebind_proc_style=three
         --with-dbm=db5 --with-berkeley-db \
         --without-sqlite2 \
         --with-crypto --with-openssl \
-%if %{with_nss}
-        --with-nss
-%else
         --without-nss
-%endif
 make %{?_smp_mflags}
 
 %install
@@ -183,55 +158,37 @@ make %{?_smp_mflags} testall
 export LD_LIBRARY_PATH=%{buildroot}/%{_libdir}/apr-util-%{apuver}
 ./testall -v -q
 
-%clean
-rm -rf $RPM_BUILD_ROOT
-
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
 %files
-%defattr(-,root,root,-)
 %doc CHANGES LICENSE NOTICE
 %{_libdir}/libaprutil-%{apuver}.so.*
 %dir %{_libdir}/apr-util-%{apuver}
 
 %files bdb
-%defattr(-,root,root,-)
 %{_libdir}/apr-util-%{apuver}/apr_dbm_db*
 
 %files pgsql
-%defattr(-,root,root,-)
 %{_libdir}/apr-util-%{apuver}/apr_dbd_pgsql*
 
 %files mysql
-%defattr(-,root,root,-)
 %{_libdir}/apr-util-%{apuver}/apr_dbd_mysql*
 
 %files sqlite
-%defattr(-,root,root,-)
 %{_libdir}/apr-util-%{apuver}/apr_dbd_sqlite*
 
 %files odbc
-%defattr(-,root,root,-)
 %{_libdir}/apr-util-%{apuver}/apr_dbd_odbc*
 
 %files ldap
-%defattr(-,root,root,-)
 %{_libdir}/apr-util-%{apuver}/apr_ldap*
 
 %files openssl
-%defattr(-,root,root,-)
 %{_libdir}/apr-util-%{apuver}/apr_crypto_openssl*
 
-%if %{with_nss}
-%files nss
-%defattr(-,root,root,-)
-%{_libdir}/apr-util-%{apuver}/apr_crypto_nss*
-%endif
-
 %files devel
-%defattr(-,root,root,-)
 %{_bindir}/apu-%{apuver}-config
 %{_libdir}/libaprutil-%{apuver}.*a
 %{_libdir}/libaprutil-%{apuver}.so
@@ -240,6 +197,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/aclocal/*.m4
 
 %changelog
+* Fri Apr 24 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 1.6.3-1
+- Update to 1.6.3
+- Modernize spec for EL10
+
 * Mon Aug 21 2017 Joe Orton <jorton@redhat.com> - 1.6.0-1
 - update to 1.6.0 (#1460831)
 - move bdb support to loadable DSO in apr-util-dbd subpackage
