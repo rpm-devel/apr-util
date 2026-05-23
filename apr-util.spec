@@ -1,8 +1,8 @@
 
-%define dbdep libdb-devel
+%global dbdep libdb-devel
 %global with_nss 0
 
-%define apuver 1
+%global apuver 1
 
 Summary: Apache Portable Runtime Utility library
 Name: apr-util
@@ -127,27 +127,27 @@ export ac_cv_ldap_set_rebind_proc_style=three
 make %{?_smp_mflags}
 
 %install
-rm -rf $RPM_BUILD_ROOT
-make install DESTDIR=$RPM_BUILD_ROOT
+rm -rf %{buildroot}
+make install DESTDIR=%{buildroot}
 
-mkdir -p $RPM_BUILD_ROOT/%{_datadir}/aclocal
-install -m 644 build/find_apu.m4 $RPM_BUILD_ROOT/%{_datadir}/aclocal
+mkdir -p %{buildroot}/%{_datadir}/aclocal
+install -m 644 build/find_apu.m4 %{buildroot}/%{_datadir}/aclocal
 
 # Unpackaged files; remove the static libaprutil
-rm -f $RPM_BUILD_ROOT%{_libdir}/aprutil.exp \
-      $RPM_BUILD_ROOT%{_libdir}/libapr*.a
+rm -f %{buildroot}%{_libdir}/aprutil.exp \
+      %{buildroot}%{_libdir}/libapr*.a
 
 # And remove the reference to the static libaprutil from the .la
 # file.
 sed -i '/^old_library/s,libapr.*\.a,,' \
-      $RPM_BUILD_ROOT%{_libdir}/libapr*.la
+      %{buildroot}%{_libdir}/libapr*.la
 
 # Remove unnecessary exports from dependency_libs
 sed -ri '/^dependency_libs/{s,-l(pq|sqlite[0-9]|rt|dl|uuid) ,,g}' \
-      $RPM_BUILD_ROOT%{_libdir}/libapr*.la
+      %{buildroot}%{_libdir}/libapr*.la
 
 # Trim libtool DSO cruft
-rm -f $RPM_BUILD_ROOT%{_libdir}/apr-util-%{apuver}/*.*a
+rm -f %{buildroot}%{_libdir}/apr-util-%{apuver}/*.*a
 
 %check
 # Run the less verbose test suites
@@ -197,6 +197,9 @@ export LD_LIBRARY_PATH=%{buildroot}/%{_libdir}/apr-util-%{apuver}
 %{_datadir}/aclocal/*.m4
 
 %changelog
+* Fri May 22 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 1.6.3-1
+- Fix spec violations: %global for constants, use %{buildroot}
+
 * Fri Apr 24 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 1.6.3-1
 - Update to 1.6.3
 - Modernize spec for EL10
