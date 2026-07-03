@@ -8,8 +8,8 @@ Summary: Apache Portable Runtime Utility library
 Name: apr-util
 Version: 1.6.3
 Release: 1%{?dist}
-License: ASL 2.0
-URL: http://apr.apache.org/
+License: Apache-2.0
+URL: https://apr.apache.org/
 Source0: https://downloads.apache.org/apr/%{name}-%{version}.tar.bz2
 Patch1: apr-util-1.2.7-pkgconf.patch
 Patch4: apr-util-1.4.1-private.patch
@@ -19,6 +19,7 @@ BuildRequires: autoconf, apr-devel >= 1.3.0
 BuildRequires: %{dbdep}, expat-devel, libuuid-devel
 Requires: apr-util-bdb%{?_isa} = %{version}-%{release}
 Obsoletes: apr-util < %{version}-%{release}
+ExclusiveArch: x86_64 aarch64
 
 %description
 The mission of the Apache Portable Runtime (APR) is to provide a
@@ -107,9 +108,7 @@ Obsoletes: apr-util-openssl < %{version}-%{release}
 This package provides the OpenSSL crypto support for the apr-util.
 
 %prep
-%setup -q
-%patch1 -p1 -b .pkgconf
-%patch4 -p1 -b .private
+%autosetup -p1
 
 %build
 autoheader && autoconf
@@ -124,11 +123,10 @@ export ac_cv_ldap_set_rebind_proc_style=three
         --without-sqlite2 \
         --with-crypto --with-openssl \
         --without-nss
-make %{?_smp_mflags}
+%make_build
 
 %install
-rm -rf %{buildroot}
-make install DESTDIR=%{buildroot}
+%make_install
 
 mkdir -p %{buildroot}/%{_datadir}/aclocal
 install -m 644 build/find_apu.m4 %{buildroot}/%{_datadir}/aclocal
@@ -153,17 +151,16 @@ rm -f %{buildroot}%{_libdir}/apr-util-%{apuver}/*.*a
 # Run the less verbose test suites
 export MALLOC_CHECK_=2 MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 cd test
-make %{?_smp_mflags} testall
+%make_build testall
 # testall breaks with DBD DSO; ignore
 export LD_LIBRARY_PATH=%{buildroot}/%{_libdir}/apr-util-%{apuver}
 ./testall -v -q
 
-%post -p /sbin/ldconfig
-
-%postun -p /sbin/ldconfig
+%ldconfig_scriptlets
 
 %files
-%doc CHANGES LICENSE NOTICE
+%license LICENSE
+%doc CHANGES NOTICE
 %{_libdir}/libaprutil-%{apuver}.so.*
 %dir %{_libdir}/apr-util-%{apuver}
 
@@ -197,6 +194,11 @@ export LD_LIBRARY_PATH=%{buildroot}/%{_libdir}/apr-util-%{apuver}
 %{_datadir}/aclocal/*.m4
 
 %changelog
+* Thu Jul 03 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 1.6.3-1
+- Fix URL: http → https; Source0 verified (downloads.apache.org/apr)
+- Apache-2.0 SPDX; ExclusiveArch: x86_64 aarch64
+- %%autosetup -p1; %%make_build; %%make_install; %%ldconfig_scriptlets; %%license
+
 * Fri May 22 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 1.6.3-1
 - Fix spec violations: %global for constants, use %{buildroot}
 
